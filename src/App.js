@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
+import { Board } from './Board';
 
 function App() {
   const [puzzle, setPuzzle] = useState([
@@ -9,6 +10,7 @@ function App() {
   ]);
   const [solvedPuzzle, setSolvedPuzzle] = useState(null);
   const [solving, setSolving] = useState(false);
+  const [visitedNodes, setVisitedNodes] = useState(0);
 
   useEffect(() => {
     if (solving) {
@@ -26,12 +28,46 @@ function App() {
     return value;
   };
 
+  const delay = (milliseconds) => {
+    return new Promise(resolve => {
+        setTimeout(resolve, milliseconds);
+    });
+  }
+
   const renderBoard = (board) => {
     console.log(board)
     console.log(typeof board)
 
+    if (board.length >= 10) {
+      return (
+        <div className='board'>
+          {board.map((item, index) => {
+            delay(1000);
+
+            return (
+              <>
+                <>{index+1}</>
+                <div className="board-column">
+                  {item.map((row, rowIndex) => (
+                    <div className="row" key={rowIndex}>
+                      {row.map((cell, colIndex) => (
+                        <div className="cell" key={colIndex}>
+                          {renderCell(cell)}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )
+          })}  
+        </div>
+      );
+    }
+
     return (
-      <div className="board-column">
+      <div className='board'>
+        <div className="board-column">
         {board.map((row, rowIndex) => (
           <div className="row" key={rowIndex}>
             {row.map((cell, colIndex) => (
@@ -42,12 +78,15 @@ function App() {
           </div>
         ))}
       </div>
+      </div>
+     
     );
   };
 
   const shuffleBoard = async () => {
     // Implement puzzle shuffling logic here
     // This function should shuffle the puzzle tiles
+
     const boardSize = puzzle.length;
     const flattenedPuzzle = [].concat(...puzzle);
     let shuffledPuzzle = [...flattenedPuzzle];
@@ -78,18 +117,20 @@ function App() {
     }
 
     // renderBoard(newPuzzle);
+
+    console.log("new puzzle here:", newPuzzle)
     setPuzzle(newPuzzle)
     renderBoard(puzzle)
   };
 
+  // A* algorithm logic
   const solvePuzzle = (initialPuzzle) => {
-    // Implement A* algorithm logic here
-    // This function should return the solved puzzle
     const goalState = [
       [1, 2, 3],
       [4, 5, 6],
       [7, 8, 0],
     ];
+    let visitedNodes = 0;
   
     // Helper function to calculate the Manhattan distance
     const manhattanDistance = (a, b) => {
@@ -98,6 +139,9 @@ function App() {
   
     // Define a node structure
     class Node {
+
+      // To test the algorithm without heuristics just remove it from the sum of the cost
+      // But there will be a lot more nodes visited
       constructor(state, parent = null, action = null, depth = 0) {
         this.state = state;
         this.parent = parent;
@@ -106,9 +150,11 @@ function App() {
         this.heuristic = this.calculateHeuristic();
         this.cost = this.depth + this.heuristic;
       }
-  
+
+      // We could guarantee that we wont return to the same node for better heuristics
       calculateHeuristic() {
         // Calculate the sum of Manhattan distances for each tile
+        // The manhattan distance is used as heuristics to calculate the sortest distance of a cell to its goal position
         let heuristic = 0;
         for (let i = 0; i < this.state.length; i++) {
           for (let j = 0; j < this.state[i].length; j++) {
@@ -125,6 +171,7 @@ function App() {
         const actions = ["left", "right", "up", "down"];
         const children = [];
         const [emptyRow, emptyCol] = findTile(this.state, 0);
+        const biggestDepth = []
   
         for (const action of actions) {
           const newState = this.applyAction(action, emptyRow, emptyCol);
@@ -132,6 +179,8 @@ function App() {
             children.push(
               new Node(newState, this, action, this.depth + 1)
             );
+            // console.log("depth: ", this.depth)
+            
           }
         }
         return children;
@@ -171,6 +220,7 @@ function App() {
           default:
             break;
         }
+
         return null;
       }
     }
@@ -195,6 +245,11 @@ function App() {
       openSet.sort((a, b) => a.cost - b.cost);
       const currentNode = openSet.shift();
       const currentState = currentNode.state.toString();
+
+      // Increment count of nodes
+      visitedNodes++;
+      setVisitedNodes(visitedNodes)
+      console.log('VISITED NODES!!::', visitedNodes);
   
       if (currentState === goalState.toString()) {
         // Reconstruct the path to the solution
@@ -243,7 +298,9 @@ function App() {
         <button onClick={handleSolveClick}>Solve</button>
       </div>
       {renderBoard(puzzle)}
-      {solvedPuzzle && <div className="solution">{renderBoard(solvedPuzzle)}</div>}
+      {/* <Board board={puzzle}/> */}
+      {solvedPuzzle && <div className="solution"><>Visited nodes: {visitedNodes}</>{renderBoard(solvedPuzzle)}</div>}
+      {/* {solvedPuzzle && <div className="solution"><Board board={solvedPuzzle}/></div>} */}
     </div>
   );
 }
