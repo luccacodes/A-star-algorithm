@@ -13,12 +13,14 @@ function App() {
   const [visitedNodes, setVisitedNodes] = useState(0);
 
   useEffect(() => {
+    // Starts the solving of the puzzle and calculates de time of process
     if (solving) {
+      console.time('solvePuzzleExecution');
       const solution = solvePuzzle(puzzle);
       setSolvedPuzzle(solution);
       setSolving(false);
+      console.timeEnd('solvePuzzleExecution');
     }
-
     // console.log(...this.state)
   }, [puzzle, solving]);
 
