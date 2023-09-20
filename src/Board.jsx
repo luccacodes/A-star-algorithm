@@ -1,45 +1,47 @@
-// import { useEffect } from "react";
+/* TEST
 
-// export const Board = (board) => {
-//     // const [boardToRender, setBoardToRender] = useState(null);
+import { useEffect } from "react";
 
-//     const renderCell = (value) => {
-//         //  Empty cell
-//         if (value === 0) return ' ';
-//         return value;
-//       };
+export const Board = (board) => {
+    // const [boardToRender, setBoardToRender] = useState(null);
 
-//     // useEffect(() => {
-//     //     // Introduce a one-second delay before rendering the board
-//     //     const timer = setTimeout(() => {
-//     //     renderBoard(board);
-//     //     }, 1000); // Delay for one second (1000 milliseconds)
+    const renderCell = (value) => {
+        //  Empty cell
+        if (value === 0) return ' ';
+        return value;
+      };
 
-//     //     return () => clearTimeout(timer); // Clear the timer if the component unmounts
-//     // }, [board]);
+    // useEffect(() => {
+    //     // Introduce a one-second delay before rendering the board
+    //     const timer = setTimeout(() => {
+    //     renderBoard(board);
+    //     }, 1000); // Delay for one second (1000 milliseconds)
 
-//     const renderBoard = (board) => {
-//         console.log(board)
-//         console.log(typeof board)
+    //     return () => clearTimeout(timer); // Clear the timer if the component unmounts
+    // }, [board]);
+
+    const renderBoard = (board) => {
+        console.log(board)
+        console.log(typeof board)
     
-//         return (
-//           <div className="board-column">
-//             {board.map((row, rowIndex) => (
-//               <div className="row" key={rowIndex}>
-//                 {row.map((cell, colIndex) => (
-//                   <div className="cell" key={colIndex}>
-//                     {renderCell(cell)}
-//                   </div>
-//                 ))}
-//               </div>
-//             ))}
-//           </div>
-//         );
-//       };
+        return (
+          <div className="board-column">
+            {board.map((row, rowIndex) => (
+              <div className="row" key={rowIndex}>
+                {row.map((cell, colIndex) => (
+                  <div className="cell" key={colIndex}>
+                    {renderCell(cell)}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        );
+      };
 
-//     return (
-//         <>
-//           {renderBoard}
-//         </>
-//       );
-// }
+    return (
+        <>
+          {renderBoard}
+        </>
+      );
+} */

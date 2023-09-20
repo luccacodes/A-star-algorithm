@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import './App.css';
-import { Board } from './Board';
+import { findTile, findManhattanDistance } from './helpers';
 
 function App() {
   const [puzzle, setPuzzle] = useState([
@@ -13,7 +13,7 @@ function App() {
   const [visitedNodes, setVisitedNodes] = useState(0);
 
   useEffect(() => {
-    // Starts the solving of the puzzle and calculates de time of process
+    // starts solving the puzzle and calculates the time taken
     if (solving) {
       console.time('solvePuzzleExecution');
       const solution = solvePuzzle(puzzle);
@@ -21,11 +21,10 @@ function App() {
       setSolving(false);
       console.timeEnd('solvePuzzleExecution');
     }
-    // console.log(...this.state)
   }, [puzzle, solving]);
 
   const renderCell = (value) => {
-    //  Empty cell
+    //  checks for empty tile
     if (value === 0) return ' ';
     return value;
   };
@@ -37,8 +36,8 @@ function App() {
   }
 
   const renderBoard = (board) => {
-    console.log(board)
-    console.log(typeof board)
+    // console.log(board)
+    // console.log(typeof board)
 
     if (board.length >= 10) {
       return (
@@ -79,32 +78,28 @@ function App() {
             ))}
           </div>
         ))}
+        </div>
       </div>
-      </div>
-     
     );
   };
 
   const shuffleBoard = async () => {
-    // Implement puzzle shuffling logic here
-    // This function should shuffle the puzzle tiles
-
     const boardSize = puzzle.length;
     const flattenedPuzzle = [].concat(...puzzle);
     let shuffledPuzzle = [...flattenedPuzzle];
   
-    // Shuffle the puzzle by making a series of valid random moves
+    // create a series of random moves
     for (let i = 0; i < 1000; i++) {
       const emptyIndex = shuffledPuzzle.indexOf(0);
       const neighbors = [];
   
-      // Check the neighbors of the empty cell
+      // check the neighbors of the empty cell
       if (emptyIndex - boardSize >= 0) neighbors.push(emptyIndex - boardSize); // Up
       if (emptyIndex + boardSize < boardSize * boardSize) neighbors.push(emptyIndex + boardSize); // Down
       if (emptyIndex % boardSize !== 0) neighbors.push(emptyIndex - 1); // Left
       if ((emptyIndex + 1) % boardSize !== 0) neighbors.push(emptyIndex + 1); // Right
   
-      // Randomly choose a neighbor to swap with the empty cell
+      // choose a random neighbor to swap with the empty cell
       const randomNeighborIndex = neighbors[Math.floor(Math.random() * neighbors.length)];
       [shuffledPuzzle[emptyIndex], shuffledPuzzle[randomNeighborIndex]] = [
         shuffledPuzzle[randomNeighborIndex],
@@ -112,20 +107,18 @@ function App() {
       ];
     }
   
-    // Convert the flattened array back to a 2D puzzle
+    // convert the array back to a puzzle
     const newPuzzle = [];
     for (let i = 0; i < boardSize; i++) {
       newPuzzle.push(shuffledPuzzle.slice(i * boardSize, (i + 1) * boardSize));
     }
 
     // renderBoard(newPuzzle);
-
-    console.log("new puzzle here:", newPuzzle)
+    console.log("New puzzle:", newPuzzle)
     setPuzzle(newPuzzle)
     renderBoard(puzzle)
   };
 
-  // A* algorithm logic
   const solvePuzzle = (initialPuzzle) => {
     const goalState = [
       [1, 2, 3],
@@ -133,17 +126,10 @@ function App() {
       [7, 8, 0],
     ];
     let visitedNodes = 0;
-  
-    // Helper function to calculate the Manhattan distance
-    const manhattanDistance = (a, b) => {
-      return Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
-    };
-  
-    // Define a node structure
+
     class Node {
 
-      // To test the algorithm without heuristics just remove it from the sum of the cost
-      // But there will be a lot more nodes visited
+      // we can remove heuristic from the cost sum but it lowers performance and visits way more nodes
       constructor(state, parent = null, action = null, depth = 0) {
         this.state = state;
         this.parent = parent;
@@ -153,27 +139,27 @@ function App() {
         this.cost = this.depth + this.heuristic;
       }
 
-      // We could guarantee that we wont return to the same node for better heuristics
+      // todo: we could guarantee that we won't return to the same node for better heuristics
       calculateHeuristic() {
-        // Calculate the sum of Manhattan distances for each tile
-        // The manhattan distance is used as heuristics to calculate the sortest distance of a cell to its goal position
+        // calculate the sum of Manhattan distances for each tile
         let heuristic = 0;
         for (let i = 0; i < this.state.length; i++) {
           for (let j = 0; j < this.state[i].length; j++) {
             if (this.state[i][j] !== 0) {
               const goalPosition = findTile(goalState, this.state[i][j]);
-              heuristic += manhattanDistance([i, j], goalPosition);
+              heuristic += findManhattanDistance([i, j], goalPosition);
             }
           }
         }
         return heuristic;
       }
   
+      // generate child nodes applying valid movements
       expand() {
         const actions = ["left", "right", "up", "down"];
         const children = [];
         const [emptyRow, emptyCol] = findTile(this.state, 0);
-        const biggestDepth = []
+        // const biggestDepth = []
   
         for (const action of actions) {
           const newState = this.applyAction(action, emptyRow, emptyCol);
@@ -182,12 +168,12 @@ function App() {
               new Node(newState, this, action, this.depth + 1)
             );
             // console.log("depth: ", this.depth)
-            
           }
         }
         return children;
       }
   
+      // apply the swap movement
       applyAction(action, emptyRow, emptyCol) {
         const newState = [...this.state.map(row => [...row])];
         switch (action) {
@@ -227,18 +213,6 @@ function App() {
       }
     }
   
-    // Helper function to find the position of a tile
-    const findTile = (state, tile) => {
-      for (let i = 0; i < state.length; i++) {
-        for (let j = 0; j < state[i].length; j++) {
-          if (state[i][j] === tile) {
-            return [i, j];
-          }
-        }
-      }
-      return null;
-    };
-  
     // A* search
     const openSet = [new Node(initialPuzzle)];
     const closedSet = new Set();
@@ -248,13 +222,12 @@ function App() {
       const currentNode = openSet.shift();
       const currentState = currentNode.state.toString();
 
-      // Increment count of nodes
       visitedNodes++;
       setVisitedNodes(visitedNodes)
-      console.log('VISITED NODES!!::', visitedNodes);
+      // console.log('VISITED NODE:', visitedNodes);
   
       if (currentState === goalState.toString()) {
-        // Reconstruct the path to the solution
+        // reconstruct solution path
         const path = [];
         let current = currentNode;
         while (current !== null) {
@@ -264,9 +237,11 @@ function App() {
         return path;
       }
   
+      // checks if state is in closedSet
       if (!closedSet.has(currentState)) {
         closedSet.add(currentState);
         const children = currentNode.expand();
+        // if not in closedSet, add to openSet for them to be explored
         for (const child of children) {
           if (!closedSet.has(child.state.toString())) {
             openSet.push(child);
@@ -275,7 +250,7 @@ function App() {
       }
     }
   
-    return null; // No solution found
+    return null;
   };
 
   const handleShuffleClick = async () => {
@@ -294,7 +269,7 @@ function App() {
 
   return (
     <div className="App">
-      <h1>8-Puzzle Solver</h1>
+      <h1>A* Search Algorithm</h1>
       <div className="buttons">
         <button onClick={handleShuffleClick}>Shuffle</button>
         <button onClick={handleSolveClick}>Solve</button>
